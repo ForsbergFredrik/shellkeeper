@@ -1,0 +1,44 @@
+# Byte-compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+env/
+.venv/
+.ENV/
+
+# Editor & IDE files
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs & temp files
+*.log
+*.tmp
+
+# Python package build files
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter notebooks checkpoints (if used)
+.ipynb_checkpoints/
+
+# SQLite database (if using for storage)
+*.sqlite3
+*.db
+
+# Secrets & environment variables
+.env
+*.secret
