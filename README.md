@@ -1,10 +1,33 @@
-# shellkeeper
+# ShellKeeper
 
-ShellKeeper is a command-line tool designed to manage and store useful shell commands. It allows users to add, delete, list, search, and clear stored commands, making it easier to keep track of frequently used or complex shell commands.
-Features
+ShellKeeper is a CLI tool for managing and storing useful shell commands. It allows users to add, delete, list, and search for stored commands.
 
-    Add Commands: Save new shell commands with a name for easy recall.
-    Delete Commands: Remove commands you no longer need.
-    List Commands: Display all stored commands.
-    Search Commands: Find commands by name or parts of the shell command.
-    Clear Commands: Remove all commands from the storage.
+## Installation
+
+You can install ShellKeeper using `pip`:
+
+```bash
+pip3 install .
+```
+
+This installs ShellKeeper in an editable mode, allowing you to run it from anywhere.
+
+## Running the Project
+
+### Run as a Module (Recommended for Development)
+
+To run the project locally without installing, use:
+
+```bash
+python3 -m shellkeeper.shellkeeper
+```
+
+This ensures that your latest local changes are used without needing to reinstall the package.
+
+### Run After Installation
+
+If you've installed ShellKeeper using `pip3 install .`, you can run it as a command:
+
+```bash
+shellkeeper
+```
