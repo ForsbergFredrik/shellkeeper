@@ -4,13 +4,17 @@ ShellKeeper is a CLI tool for managing and storing useful shell commands. It all
 
 ## Installation
 
-You can install ShellKeeper using `pip`:
+You can install ShellKeeper using `pipx`.
+
+### Install with `pipx`
+
+`pipx` is a tool to help you install and run Python applications in isolated environments. It's a great way to install ShellKeeper without affecting your system's Python environment.
+
+To install ShellKeeper globally with `pipx`, use the following command:
 
 ```bash
-pip3 install .
+pipx install .
 ```
-
-This installs ShellKeeper in an editable mode, allowing you to run it from anywhere.
 
 ## Running the Project
 
@@ -25,8 +29,6 @@ python3 -m shellkeeper.shellkeeper
 This ensures that your latest local changes are used without needing to reinstall the package.
 
 ### Run After Installation
-
-If you've installed ShellKeeper using `pip3 install .`, you can run it as a command:
 
 ```bash
 shellkeeper
