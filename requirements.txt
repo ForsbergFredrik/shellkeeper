@@ -1,0 +1,11 @@
+blessed==1.20.0
+colorama==0.4.6
+editor==1.6.6
+inquirer==3.4.0
+readchar==4.2.1
+runs==1.2.2
+setuptools==75.8.2
+shellkeeper @ file:///home/fredrik/workspace/python_workspace/shellkeeper
+six==1.17.0
+wcwidth==0.2.13
+xmod==1.8.1

@@ -1,17 +1,27 @@
-#!/usr/bin/env python3
-
-import argparse
-from .command_store import CommandStore
+import os
 import inquirer
+from .command_store import CommandStore
+from colorama import Fore, Style, init
+
+# Initialize colorama for colors
+init(autoreset=True)
 
 # Initialize the command store
 store = CommandStore()
 store.load()
 
 
+def clear_screen():
+    """Clear the terminal screen."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+
 def interactive_mode():
     """Interactive mode for managing shell commands."""
     while True:
+        # Clear the screen before displaying the menu
+        clear_screen()
+
         # Prompt user with available options
         questions = [
             inquirer.List('action',
@@ -35,19 +45,36 @@ def interactive_mode():
                     'category', message="Enter category for the command")
             ])['category']
             name = inquirer.prompt([
-                inquirer.Text('name', message="Enter name for the command")
+                inquirer.Text(
+                    'name', message="Enter description for the command")
             ])['name']
-            command = inquirer.prompt([
-                inquirer.Text('command', message="Enter the shell command")
-            ])['command']
-            store.add_command(category, name, command)
+            commands = inquirer.prompt([
+                inquirer.Text(
+                    'commands', message="Enter the shell command(s), separated by '&&'")
+            ])['commands'].split("&&")
+
+            store.add_command(
+                category, name, [cmd.strip() for cmd in commands])
+            print(Fore.GREEN + f'Command "{name}" added successfully.')
 
         elif action['action'] == 'Delete command':
-            name = inquirer.prompt([
-                inquirer.Text(
-                    'name', message="Enter the name of the command to delete")
-            ])['name']
+            if not store.commands:
+                print(Fore.RED + "No commands stored.")
+                continue
+
+            command_choices = {
+                entry.description: entry for entry in store.commands}
+            delete_question = [
+                inquirer.List(
+                    'name',
+                    message="Choose a command to delete",
+                    choices=list(command_choices.keys())
+                )
+            ]
+            name = inquirer.prompt(delete_question)['name']
+
             store.delete_command(name)
+            print(Fore.GREEN + f'Command "{name}" deleted successfully.')
 
         elif action['action'] == 'Search command':
             search_term = inquirer.prompt([
@@ -63,69 +90,19 @@ def interactive_mode():
             if confirm:
                 store.commands.clear()
                 store.save()
-                print("All commands deleted.")
+                print(Fore.RED + "All commands deleted.")
 
         elif action['action'] == 'Exit':
-            print("Exiting interactive mode.")
+            print(Fore.YELLOW + "Exiting interactive mode.")
             break
 
+        # Wait for the user to press enter before clearing the screen and showing the menu again
+        input(Fore.CYAN + "\nPress Enter to continue...")
 
-def cli_menu():
-    """Command-line interface for managing shell commands."""
-    parser = argparse.ArgumentParser(
-        description="Manage stored shell commands.")
-    subparsers = parser.add_subparsers(
-        dest="command", help="Available commands")
-
-    # List commands (optional category)
-    list_parser = subparsers.add_parser(
-        "list", help="List all stored commands")
-    list_parser.add_argument("category", nargs="?",
-                             default=None, help="Category to filter by")
-
-    # Add command with category
-    add_parser = subparsers.add_parser("add", help="Add a new command")
-    add_parser.add_argument("category", help="Category of the command")
-    add_parser.add_argument("name", help="Name of the command")
-    add_parser.add_argument("shell_command", help="Shell command to execute")
-
-    # Delete command with category
-    delete_parser = subparsers.add_parser("delete", help="Delete a command")
-    delete_parser.add_argument("name", help="Name of the command to delete")
-
-    # Search commands
-    search_parser = subparsers.add_parser(
-        "search", help="Search for a command")
-    search_parser.add_argument("search_term", help="Search term")
-
-    # Clear all commands
-    subparsers.add_parser("clear", help="Delete all stored commands")
-
-    # Interactive mode
-    subparsers.add_parser(
-        "interactive", help="Run the CLI in interactive mode")
-
-    args = parser.parse_args()
-
-    # Command execution mapping
-    commands = {
-        "list": lambda: store.list_commands(args.category),
-        "add": lambda: store.add_command(args.category, args.name, args.shell_command),
-        "delete": lambda: store.delete_command(args.name),
-        "search": lambda: store.search_command(args.search_term),
-        "clear": lambda: store.commands.clear() or store.save() or print("All commands deleted."),
-    }
-
-    if args.command == "interactive":
-        interactive_mode()
-    else:
-        if args.command:
-            commands[args.command]()
-        else:
-            parser.print_help()
 
 def main():
-    cli_menu()
+    interactive_mode()
+
 
 if __name__ == "__main__":
     main()

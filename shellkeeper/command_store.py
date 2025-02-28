@@ -18,100 +18,115 @@ os.makedirs(store_dir, exist_ok=True)
 
 
 @dataclass
+class CommandEntry:
+    category: str
+    description: str
+    commands:  list[str] = field(default_factory=list)
+
+
+@dataclass
+class CommandEntry:
+    category: str
+    description: str
+    commands:  list[str] = field(default_factory=list)
+
+    def __str__(self):
+
+        commands_str = f"{Fore.MAGENTA}- {Style.BRIGHT}{self.commands[0]}{Style.RESET_ALL}\n"
+        for cmd in self.commands[1:]:
+            commands_str += f"{"".ljust(20)}| {Fore.MAGENTA}- {Style.BRIGHT}{cmd}{Style.RESET_ALL}\n"
+        # Create a formatted string for the Description and Commands
+        formatted_string = (
+            f"{Fore.YELLOW}{Style.BRIGHT}{'Description'.ljust(20)}| {'Commands':<30}{Style.RESET_ALL}\n"
+            f"{'-' * 50}\n"
+            f"{self.description.ljust(20)}| {commands_str}\n"
+            f"{'-' * 50}"
+        )
+
+        return formatted_string
+
+
+@dataclass
 class CommandStore:
-    commands: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    commands: list[CommandEntry] = field(default_factory=list)
 
     def load(self):
+        """Loads commands from the store file, handling empty or corrupt files."""
         if os.path.exists(store_file):
-            with open(store_file, 'r') as file:
-                try:
-                    data = json.load(file)
-                    if not isinstance(data, dict):
-                        raise ValueError(
-                            "Invalid format: Expected a dictionary.")
-                    for category, commands in data.items():
-                        if not isinstance(commands, dict):
-                            raise ValueError(
-                                "Invalid format: Expected a dictionary.")
-                        for name, command in commands.items():
-                            if not isinstance(name, str) or not isinstance(command, str):
-                                raise ValueError(
-                                    "Invalid format: Expected string values.")
-                        self.commands = data
-                except (json.JSONDecodeError, ValueError) as e:
-                    print(f"Error: {e}. Starting with an empty structure.")
-                    self.commands = {}
+            try:
+                with open(store_file, 'r') as file:
+                    data = file.read().strip()
+
+                    if not data:  # Handle empty file
+                        print(Fore.YELLOW +
+                              "Warning: store.json is empty. Starting fresh.")
+                        self.commands = []
+                        return
+
+                    raw_entries = json.loads(data)
+                    self.commands = [CommandEntry(**entry)
+                                     for entry in raw_entries]
+
+            except (json.JSONDecodeError, ValueError) as e:
+                print(
+                    Fore.RED + f"Error loading store.json: {e}. Resetting file.")
+                self.commands = []
+                self.save()  # Reset the file
         else:
-            self.commands = {}
+            self.commands = []
 
     def save(self):
         with open(store_file, 'w') as file:
-            json.dump(self.commands, file, indent=4)
+            json.dump([entry.__dict__ for entry in self.commands],
+                      file, indent=4)
 
-    def add_command(self, category: str, name: str, command: str):
-        if category not in self.commands:
-            self.commands[category] = {}
-        self.commands[category][name] = command
+    def add_command(self, category: str, name: str, commands: str):
+        print("Add command called", commands)
+        command_entry = CommandEntry(
+            category=category, description=name, commands=commands)
+        self.commands.append(command_entry)
         self.save()
-        print(f'Command "{name}" added successfully.')
 
     def delete_command(self, name: str):
-        for category in list(self.commands.keys()):
-            if name in self.commands[category]:
-                print(
-                    f'Command: {name} in category {category} deleted successfully.')
-                del self.commands[category][name]
-
-                # If category is now empty, remove it
-                if not self.commands[category]:
-                    del self.commands[category]
-                    print(f'Category "{category}" is empty and deleted.')
-
+        for command in self.commands:
+            if command.description == name:
+                self.commands.remove(command)
                 self.save()
+                return
+        print(f'Command "{name}" not found.')
 
     def list_commands(self, category: str = None):
+        """Lists all commands, filtered by category if specified."""
         if not self.commands:
             print(Fore.RED + "No commands stored.")
             return
 
         if category:
-            if category in self.commands:
-                # Color the category name header
-                print(Fore.YELLOW + f"Commands in Category: {category}\n")
+            filtered_entries = [
+                entry for entry in self.commands if entry.category.lower() == category.lower()]
 
-                longest_name = max(len(name)
-                                   for name in self.commands[category])
-
-                # Print headers with bold and aligned
-                print(Fore.CYAN + Style.BRIGHT +
-                      f'{"Command Name".ljust(longest_name + 20)}| Shell Command')
-                print(Fore.CYAN + Style.BRIGHT +
-                      f'{"-" * (longest_name + 20)}+{"-" * 50}')
-
-                for name, cmd in self.commands[category].items():
-                    # Print each command name in bright white, and the command in green
-                    print(
-                        Fore.GREEN + f'{name.ljust(longest_name + 20)}| ' + Fore.WHITE + Style.BRIGHT + cmd)
-
-            else:
+            if not filtered_entries:
                 print(Fore.RED + f'Category "{category}" not found.')
+                return
+
+            print(Fore.YELLOW + f"\nCommands in Category: {category}\n")
+            for entry in filtered_entries:
+                print(entry)
+
         else:
-            print(Fore.YELLOW + "\nStored Commands by Category:")
+            print(Fore.YELLOW + "\nStored Commands by Category:\n")
+            categorized_entries = {}
 
-            # Iterate over all categories and print the commands in the same format
-            for cat, cmds in self.commands.items():
-                longest_name = max(len(name) for name in cmds)
+            # Group entries by category
+            for entry in self.commands:
+                categorized_entries.setdefault(
+                    entry.category, []).append(entry)
 
-                # Print category header
-                print(Fore.YELLOW + f"\nCommands in Category: {cat}\n")
-                print(Fore.CYAN + Style.BRIGHT +
-                      f'{"Command Name".ljust(longest_name + 20)}| Shell Command')
-                print(Fore.CYAN + Style.BRIGHT +
-                      f'{"-" * (longest_name + 20)}+{"-" * 50}')
+            # Print each category with its commands
+            for cat, entries in categorized_entries.items():
+                print(f"{Style.RESET_ALL}{Fore.CYAN}[{cat}]\n\n")
 
-                for name, cmd in cmds.items():
-                    # Print command name in green and command in bright white
-                    print(
-                        Fore.GREEN + f'{name.ljust(longest_name + 20)}| ' + Fore.WHITE + Style.BRIGHT + cmd)
+                for entry in entries:
+                    print(entry)  # Calls CommandEntry's __str__ method
 
-        print("\n\n\n")
+            print("\n")
